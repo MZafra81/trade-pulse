@@ -1,8 +1,10 @@
 import os
+import uuid
+import re
 from supabase import create_client, Client
 
 SUPABASE_URL = "https://kzvhsqjrotjnucsqchcl.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6dmhzcWpyb3RqbnVjc3FjaGNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzYzNzU1NiwiZXhwIjoyMTA5MjEzNTU2fQ.F0wf_2c_Nab3CtBVhP3TOBh5U9f4A2sER5gEBG56giw"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6dmhzcWpyb3RqbnVjc3FjaGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTYwOTIxOTQsImV4cCI6MTk3MTY2ODE5NH0.Lt6WkhCXPR1RLFYpydbWCW2GT-_exqW7E4Dp-Dmeu6o"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -54,6 +56,10 @@ sample_jobs = [
     }
 ]
 
+def make_slug(title, city):
+    clean = re.sub(r'[^a-zA-Z0-9]+', '-', f"{title}-{city}").strip('-').lower()
+    return f"{clean}-{uuid.uuid4().hex[:6]}"
+
 def run_ingestion():
     print("Connecting to Supabase and uploading job listings...")
     for job in sample_jobs:
@@ -61,6 +67,7 @@ def run_ingestion():
         if check.data and len(check.data) > 0:
             print(f"Skipping already existing job: {job['job_title']}")
         else:
+            job["slug"] = make_slug(job["job_title"], job["city"])
             supabase.table("jobs").insert(job).execute()
             print(f"Added: {job['job_title']}")
 
