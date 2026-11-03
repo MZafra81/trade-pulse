@@ -25,7 +25,7 @@ export default function Home() {
         if (!error && data) {
           setJobs(data);
           if (data.length > 0) {
-            setSelectedJob(data[0]); // Selecciona el primero por defecto
+            setSelectedJob(data[0]);
           }
         }
       } catch (err) {
@@ -133,9 +133,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Contenedor Principal Split-View (Estilo Computrabajo) */}
+      {/* Contenedor Principal Split-View */}
       <main className="mx-auto flex w-full max-w-7xl flex-1 overflow-hidden p-4 gap-4">
-        {/* Columna Izquierda: Listado de Tarjetas */}
+        {/* Columna Izquierda: Listado */}
         <div className="w-full md:w-5/12 overflow-y-auto space-y-3 pr-1">
           <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 px-1">
             {loading ? 'Cargando vacantes...' : `${filteredJobs.length} empleos encontrados`}
@@ -188,11 +188,10 @@ export default function Home() {
           })}
         </div>
 
-        {/* Columna Derecha: Detalle Completo del Empleo */}
+        {/* Columna Derecha: Detalle */}
         <div className="hidden md:flex md:w-7/12 flex-col rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
           {selectedJob ? (
             <div className="flex flex-col h-full overflow-y-auto">
-              {/* Encabezado del Detalle */}
               <div className="border-b p-6 sticky top-0 bg-white z-10">
                 <div className="flex justify-between items-start">
                   <div>
@@ -216,7 +215,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Botón de Postulación que lleva a la fuente original */}
                 <div className="mt-5">
                   <a
                     href={selectedJob.original_url || selectedJob.apply_url || `mailto:${selectedJob.contact_email || 'apply@tradepulse.work'}`}
@@ -229,7 +227,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Cuerpo del Detalle */}
               <div className="p-6 space-y-6">
                 <div>
                   <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-2">
