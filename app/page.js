@@ -8,7 +8,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
 
-  // Filtros
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTrade, setSelectedTrade] = useState('ALL');
   const [selectedState, setSelectedState] = useState('ALL');
@@ -38,7 +38,7 @@ export default function Home() {
     loadJobs();
   }, []);
 
-  // Listas dinámicas para selectores
+  // Dynamic filter lists
   const tradeCategories = useMemo(() => {
     const categories = new Set(jobs.map((j) => j.trade_category).filter(Boolean));
     return ['ALL', ...Array.from(categories)];
@@ -49,7 +49,7 @@ export default function Home() {
     return ['ALL', ...Array.from(states)];
   }, [jobs]);
 
-  // Filtrado y ordenamiento en cliente
+  // Client-side filtering & sorting
   const filteredJobs = useMemo(() => {
     return jobs
       .filter((job) => {
@@ -76,7 +76,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen flex-col bg-slate-100 text-slate-800">
-      {/* Barra de Navegación */}
+      {/* Top Navigation */}
       <header className="border-b bg-white px-6 py-3 flex-shrink-0">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-2">
@@ -84,17 +84,17 @@ export default function Home() {
             <span className="text-xl font-bold tracking-tight text-slate-900">TradePulse</span>
           </div>
           <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-            BLUE-COLLAR PORTAL
+            VERIFIED TRADE JOBS
           </span>
         </div>
       </header>
 
-      {/* Barra Superior de Filtros */}
+      {/* Filter Bar */}
       <section className="border-b bg-white px-6 py-4 flex-shrink-0 shadow-sm">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
           <input
             type="text"
-            placeholder="Buscar por puesto, empresa o ciudad..."
+            placeholder="Search by title, company, or city..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 min-w-[200px] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
@@ -105,7 +105,7 @@ export default function Home() {
             onChange={(e) => setSelectedTrade(e.target.value)}
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
           >
-            <option value="ALL">Todas las Especialidades</option>
+            <option value="ALL">All Trades</option>
             {tradeCategories.filter((t) => t !== 'ALL').map((trade) => (
               <option key={trade} value={trade}>{trade}</option>
             ))}
@@ -116,7 +116,7 @@ export default function Home() {
             onChange={(e) => setSelectedState(e.target.value)}
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
           >
-            <option value="ALL">Todos los Estados</option>
+            <option value="ALL">All States</option>
             {statesList.filter((s) => s !== 'ALL').map((state) => (
               <option key={state} value={state}>{state}</option>
             ))}
@@ -127,23 +127,23 @@ export default function Home() {
             onChange={(e) => setSortBy(e.target.value)}
             className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
           >
-            <option value="newest">Más recientes</option>
-            <option value="rate">Mejor pago por hora</option>
+            <option value="newest">Most Recent</option>
+            <option value="rate">Highest Hourly Rate</option>
           </select>
         </div>
       </section>
 
-      {/* Contenedor Principal Split-View */}
+      {/* Split-View Container */}
       <main className="mx-auto flex w-full max-w-7xl flex-1 overflow-hidden p-4 gap-4">
-        {/* Columna Izquierda: Listado */}
+        {/* Left Column: Job Cards List */}
         <div className="w-full md:w-5/12 overflow-y-auto space-y-3 pr-1">
           <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 px-1">
-            {loading ? 'Cargando vacantes...' : `${filteredJobs.length} empleos encontrados`}
+            {loading ? 'Loading jobs...' : `${filteredJobs.length} jobs available`}
           </div>
 
           {filteredJobs.length === 0 && !loading && (
             <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-              No hay ofertas con los filtros seleccionados.
+              No openings match your search criteria.
             </div>
           )}
 
@@ -161,10 +161,10 @@ export default function Home() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-                    {job.trade_category || 'Oficio'}
+                    {job.trade_category || 'Trade'}
                   </span>
                   <span className="text-xs text-slate-500">
-                    {job.created_at ? new Date(job.created_at).toLocaleDateString() : 'Reciente'}
+                    {job.created_at ? new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
                   </span>
                 </div>
 
@@ -188,10 +188,11 @@ export default function Home() {
           })}
         </div>
 
-        {/* Columna Derecha: Detalle */}
+        {/* Right Column: Full Job Details */}
         <div className="hidden md:flex md:w-7/12 flex-col rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
           {selectedJob ? (
             <div className="flex flex-col h-full overflow-y-auto">
+              {/* Header */}
               <div className="border-b p-6 sticky top-0 bg-white z-10">
                 <div className="flex justify-between items-start">
                   <div>
@@ -210,11 +211,12 @@ export default function Home() {
                       <div className="text-2xl font-bold text-slate-900">
                         ${selectedJob.hourly_rate_min} - ${selectedJob.hourly_rate_max}
                       </div>
-                      <span className="text-xs text-slate-500">por hora</span>
+                      <span className="text-xs text-slate-500">per hour</span>
                     </div>
                   )}
                 </div>
 
+                {/* Apply Button */}
                 <div className="mt-5">
                   <a
                     href={selectedJob.original_url || selectedJob.apply_url || `mailto:${selectedJob.contact_email || 'apply@tradepulse.work'}`}
@@ -222,25 +224,26 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition"
                   >
-                    Postular en la fuente original ↗
+                    Apply on Original Site ↗
                   </a>
                 </div>
               </div>
 
+              {/* Body */}
               <div className="p-6 space-y-6">
                 <div>
                   <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-2">
-                    Descripción del Puesto
+                    Job Description
                   </h4>
                   <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                    {selectedJob.description || 'No se proporcionó descripción detallada para esta vacante.'}
+                    {selectedJob.description || 'No detailed description provided for this opening.'}
                   </div>
                 </div>
 
                 {selectedJob.requirements && (
                   <div>
                     <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-2">
-                      Requisitos y Certificaciones
+                      Requirements & Licenses
                     </h4>
                     <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                       {selectedJob.requirements}
@@ -251,7 +254,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="flex h-full items-center justify-center text-slate-400 text-sm">
-              Selecciona una vacante a la izquierda para ver los detalles.
+              Select a job listing on the left to view details.
             </div>
           )}
         </div>
