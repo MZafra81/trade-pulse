@@ -2,7 +2,7 @@ import os
 from supabase import create_client, Client
 
 SUPABASE_URL = "https://kzvhsqjrotjnucsqchcl.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6dmhzcWpyb3RqbnVjc3FjaGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTYwOTIxOTQsImV4cCI6MTk3MTY2ODE5NH0.Lt6WkhCXPR1RLFYpydbWCW2GT-_exqW7E4Dp-Dmeu6o"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6dmhzcWpyb3RqbnVjc3FjaGNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzYzNzU1NiwiZXhwIjoyMTA5MjEzNTU2fQ.F0wf_2c_Nab3CtBVhP3TOBh5U9f4A2sER5gEBG56giw"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
