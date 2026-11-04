@@ -1,10 +1,16 @@
-import os
-import uuid
 import re
+import uuid
 from supabase import create_client, Client
 
-SUPABASE_URL = "https://kzvhsqjrotjnucsqchcl.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6dmhzcWpyb3RqbnVjc3FjaGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NTYwOTIxOTQsImV4cCI6MTk3MTY2ODE5NH0.Lt6WkhCXPR1RLFYpydbWCW2GT-_exqW7E4Dp-Dmeu6o"
+# Lee automáticamente la URL y la clave buena que ya están en lib/supabase.js
+with open("lib/supabase.js", "r", encoding="utf-8") as f:
+    js_content = f.read()
+
+url_match = re.search(r"supabaseUrl\s*=\s*['\"](https://[^'\"]+)['\"]", js_content)
+key_match = re.search(r"supabaseAnonKey\s*=\s*['\"](eyJ[^'\"]+)['\"]", js_content)
+
+SUPABASE_URL = url_match.group(1)
+SUPABASE_KEY = key_match.group(1)
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -23,36 +29,6 @@ sample_jobs = [
         "apply_url": "https://houston.craigslist.org/trd/d/commercial-plumber/7728192011.html",
         "source_apply_url": "https://houston.craigslist.org/trd/d/commercial-plumber/7728192011.html",
         "contact_email": "jobs@lonestarplumbingtx.com"
-    },
-    {
-        "job_title": "Certified Structural Pipe Welder",
-        "company_name": "Gulf Coast Industrial Services",
-        "trade_category": "Welding",
-        "city": "Tampa",
-        "state": "FL",
-        "hourly_rate_min": 30.00,
-        "hourly_rate_max": 38.50,
-        "description": "Immediate opening for 6G Pipe and Structural Welders for industrial facility maintenance in the Port of Tampa area.",
-        "requirements": "- Must pass 6G SMAW/GTAW weld test on carbon pipe\n- TWIC card required\n- 3+ years heavy industrial site experience",
-        "original_url": "https://tampa.craigslist.org/psc/trd/d/pipe-welder/7728293812.html",
-        "apply_url": "https://tampa.craigslist.org/psc/trd/d/pipe-welder/7728293812.html",
-        "source_apply_url": "https://tampa.craigslist.org/psc/trd/d/pipe-welder/7728293812.html",
-        "contact_email": "careers@gulfcoastindustrial.com"
-    },
-    {
-        "job_title": "Residential HVAC Service Technician",
-        "company_name": "All-State Air & Heat",
-        "trade_category": "HVAC",
-        "city": "Orlando",
-        "state": "FL",
-        "hourly_rate_min": 26.00,
-        "hourly_rate_max": 35.00,
-        "description": "Full-time HVAC technician needed for diagnostics, seasonal tune-ups, and warranty repairs across Orange County. Fully equipped work van provided.",
-        "requirements": "- EPA Universal Certification required\n- Minimum 2 years troubleshooting residential split systems\n- Clean motor vehicle record",
-        "original_url": "https://orlando.craigslist.org/trd/d/hvac-tech/7728345129.html",
-        "apply_url": "https://orlando.craigslist.org/trd/d/hvac-tech/7728345129.html",
-        "source_apply_url": "https://orlando.craigslist.org/trd/d/hvac-tech/7728345129.html",
-        "contact_email": "recruiting@allstateairfl.com"
     }
 ]
 
@@ -61,7 +37,7 @@ def make_slug(title, city):
     return f"{clean}-{uuid.uuid4().hex[:6]}"
 
 def run_ingestion():
-    print("Connecting to Supabase and uploading job listings...")
+    print("Connecting to Supabase using credentials from lib/supabase.js...")
     for job in sample_jobs:
         check = supabase.table("jobs").select("id").eq("original_url", job["original_url"]).execute()
         if check.data and len(check.data) > 0:
