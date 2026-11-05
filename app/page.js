@@ -45,25 +45,25 @@ export default function Home() {
           <span className="bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg text-lg tracking-wide">TP</span>
           <h1 className="text-xl font-bold tracking-tight text-white">TradePulse <span className="text-blue-500 text-xs uppercase px-2 py-0.5 bg-blue-500/10 rounded ml-1 border border-blue-500/20">Direct Employer</span></h1>
         </div>
-        <p className="text-sm text-slate-400 hidden sm:block">Empleos directos con empresas contratistas en EE. UU.</p>
+        <p className="text-sm text-slate-400 hidden sm:block">Direct skilled trade jobs with verified contractors in the US</p>
       </header>
 
-      {/* Main Container estilo Computrabajo / Dos Columnas */}
+      {/* Main Container / Two Columns Layout */}
       <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
         
-        {/* COLUMNA IZQUIERDA: Filtros y Listado (5 columnas) */}
+        {/* LEFT COLUMN: Filters & Job List (5 cols) */}
         <div className="md:col-span-5 flex flex-col space-y-4">
           
-          {/* Filtros de búsqueda */}
+          {/* Search Filters */}
           <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-sm space-y-3">
-            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Filtrar Vacantes</h2>
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Filter Openings</h2>
             <div className="grid grid-cols-2 gap-2">
               <select
                 value={searchCategory}
                 onChange={(e) => setSearchCategory(e.target.value)}
                 className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Todas las Especialidades</option>
+                <option value="">All Trades</option>
                 <option value="HVAC">HVAC</option>
                 <option value="Electrician">Electrician</option>
                 <option value="Plumbing">Plumbing</option>
@@ -73,7 +73,7 @@ export default function Home() {
 
               <input
                 type="text"
-                placeholder="Ciudad (ej. Dallas)"
+                placeholder="City (e.g. Dallas)"
                 value={searchCity}
                 onChange={(e) => setSearchCity(e.target.value)}
                 className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
@@ -81,12 +81,12 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Listado de empleos */}
+          {/* Job List */}
           <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-240px)] pr-1">
             {loading ? (
-              <div className="text-center py-12 text-slate-500 text-sm">Cargando vacantes...</div>
+              <div className="text-center py-12 text-slate-500 text-sm">Loading listings...</div>
             ) : jobs.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-sm bg-slate-950 rounded-xl border border-slate-800">No se encontraron ofertas activas.</div>
+              <div className="text-center py-12 text-slate-500 text-sm bg-slate-950 rounded-xl border border-slate-800">No active job openings found.</div>
             ) : (
               jobs.map((job) => {
                 const isSelected = selectedJob?.id === job.id;
@@ -120,12 +120,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: Detalle del Puesto y Enlace Directo (7 columnas) */}
+        {/* RIGHT COLUMN: Job Detail & Direct Apply (7 cols) */}
         <div className="md:col-span-7 bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col h-[calc(100vh-100px)] sticky top-6 overflow-y-auto">
           {selectedJob ? (
             <div className="flex flex-col h-full justify-between space-y-6">
               
-              {/* Cabecera y descripción */}
+              {/* Header & Description */}
               <div className="space-y-4 overflow-y-auto pr-2">
                 <div className="border-b border-slate-800 pb-4">
                   <div className="flex justify-between items-start">
@@ -138,31 +138,31 @@ export default function Home() {
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-bold text-emerald-400">${selectedJob.hourly_rate_min} - ${selectedJob.hourly_rate_max}</span>
-                      <p className="text-xs text-slate-500">Pago por hora</p>
+                      <p className="text-xs text-slate-500">Hourly Rate</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4 mt-3 text-xs text-slate-400">
-                    <span>📍 Ubicación: <strong className="text-slate-200">{selectedJob.city}, {selectedJob.state}</strong></span>
-                    <span>✉️ RRHH Directo: <strong className="text-slate-200">{selectedJob.contact_email || 'careers@company.com'}</strong></span>
+                    <span>📍 Location: <strong className="text-slate-200">{selectedJob.city}, {selectedJob.state}</strong></span>
+                    <span>✉️ Direct HR: <strong className="text-slate-200">{selectedJob.contact_email || 'careers@company.com'}</strong></span>
                   </div>
                 </div>
 
                 <div className="space-y-4 text-sm text-slate-300">
                   <div>
-                    <h4 className="font-semibold text-white mb-1.5 uppercase tracking-wide text-xs text-blue-400">Descripción del Puesto</h4>
+                    <h4 className="font-semibold text-white mb-1.5 uppercase tracking-wide text-xs text-blue-400">Job Description</h4>
                     <p className="whitespace-pre-line leading-relaxed text-slate-300">{selectedJob.description}</p>
                   </div>
 
                   {selectedJob.requirements && (
                     <div>
-                      <h4 className="font-semibold text-white mb-1.5 uppercase tracking-wide text-xs text-blue-400">Requisitos y Licencias</h4>
+                      <h4 className="font-semibold text-white mb-1.5 uppercase tracking-wide text-xs text-blue-400">Requirements & Certifications</h4>
                       <p className="whitespace-pre-line leading-relaxed text-slate-300 bg-slate-900/60 p-3.5 rounded-lg border border-slate-800/80">{selectedJob.requirements}</p>
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Botón de Aplicación Directa con la Empresa (Sin Intermediarios) */}
+              {/* Direct Employer Apply Button (No Middlemen) */}
               <div className="pt-4 border-t border-slate-800 bg-slate-950">
                 <a
                   href={selectedJob.apply_url || selectedJob.original_url}
@@ -170,18 +170,18 @@ export default function Home() {
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 px-4 rounded-xl transition-colors text-sm shadow-lg shadow-blue-600/20 group"
                 >
-                  <span>Aplicar Directamente en la Web de la Empresa</span>
+                  <span>Apply Directly on Company Website</span>
                   <span className="ml-2 group-hover:translate-x-1 transition-transform">↗</span>
                 </a>
                 <p className="text-center text-xs text-slate-500 mt-2">
-                  Enlace oficial directo al portal de contratación de {selectedJob.company_name}.
+                  Official direct link to {selectedJob.company_name} hiring portal.
                 </p>
               </div>
 
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
-              Selecciona una oferta en la lista izquierda para ver los detalles de la empresa.
+              Select an opening from the left list to view company details.
             </div>
           )}
         </div>
