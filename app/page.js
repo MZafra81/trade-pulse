@@ -1,264 +1,290 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [searchCategory, setSearchCategory] = useState('');
+  const [searchCity, setSearchCity] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTrade, setSelectedTrade] = useState('ALL');
-  const [selectedState, setSelectedState] = useState('ALL');
-  const [sortBy, setSortBy] = useState('newest');
+  // Estados para el formulario de postulación nativa
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [experienceYears, setExperienceYears] = useState('2-4 years');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState(false);
 
   useEffect(() => {
-    async function loadJobs() {
-      try {
-        const { data, error } = await supabase
-          .from('jobs')
-          .select('*')
-          .order('created_at', { ascending: false });
+    fetchJobs();
+  }, [searchCategory, searchCity]);
 
-        if (!error && data) {
-          setJobs(data);
-          if (data.length > 0) {
-            setSelectedJob(data[0]);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching jobs:', err);
-      } finally {
-        setLoading(false);
-      }
+  async function fetchJobs() {
+    setLoading(true);
+    let query = supabase.from('jobs').select('*').order('created_at', { ascending: false });
+
+    if (searchCategory) {
+      query = query.eq('trade_category', searchCategory);
+    }
+    if (searchCity) {
+      query = query.ilike('city', `%${searchCity}%`);
     }
 
-    loadJobs();
-  }, []);
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching jobs:', error);
+    } else {
+      setJobs(data || []);
+      if (data && data.length > 0 && !selectedJob) {
+        setSelectedJob(data[0]);
+      }
+    }
+    setLoading(false);
+  }
 
-  // Dynamic filter lists
-  const tradeCategories = useMemo(() => {
-    const categories = new Set(jobs.map((j) => j.trade_category).filter(Boolean));
-    return ['ALL', ...Array.from(categories)];
-  }, [jobs]);
+  async function handleApply(e) {
+    e.preventDefault();
+    if (!selectedJob) return;
 
-  const statesList = useMemo(() => {
-    const states = new Set(jobs.map((j) => j.state).filter(Boolean));
-    return ['ALL', ...Array.from(states)];
-  }, [jobs]);
+    setSubmitting(true);
+    setSuccessMsg(false);
 
-  // Client-side filtering & sorting
-  const filteredJobs = useMemo(() => {
-    return jobs
-      .filter((job) => {
-        const matchesTrade = selectedTrade === 'ALL' || job.trade_category === selectedTrade;
-        const matchesState = selectedState === 'ALL' || job.state === selectedState;
-        const matchesSearch =
-          searchQuery === '' ||
-          job.job_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          job.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          job.city?.toLowerCase().includes(searchQuery.toLowerCase());
+    const { error } = await supabase.from('applications').insert([
+      {
+        job_id: selectedJob.id,
+        full_name: fullName,
+        phone: phone,
+        experience_years: experienceYears,
+        message: message,
+      },
+    ]);
 
-        return matchesTrade && matchesState && matchesSearch;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'newest') {
-          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-        }
-        if (sortBy === 'rate') {
-          return (b.hourly_rate_max || 0) - (a.hourly_rate_max || 0);
-        }
-        return 0;
-      });
-  }, [jobs, selectedTrade, selectedState, searchQuery, sortBy]);
+    setSubmitting(false);
+
+    if (error) {
+      console.error('Error submitting application:', error);
+      alert('Hubo un error al enviar tu postulación. Inténtalo de nuevo.');
+    } else {
+      setSuccessMsg(true);
+      setFullName('');
+      setPhone('');
+      setMessage('');
+    }
+  }
 
   return (
-    <div className="flex h-screen flex-col bg-slate-100 text-slate-800">
-      {/* Top Navigation */}
-      <header className="border-b bg-white px-6 py-3 flex-shrink-0">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-blue-600 px-2 py-1 text-sm font-bold text-white">TP</span>
-            <span className="text-xl font-bold tracking-tight text-slate-900">TradePulse</span>
-          </div>
-          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-            VERIFIED TRADE JOBS
-          </span>
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+      {/* Header */}
+      <header className="bg-slate-950 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <span className="bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg text-lg tracking-wide">TP</span>
+          <h1 className="text-xl font-bold tracking-tight text-white">TradePulse <span className="text-blue-500 text-xs uppercase px-2 py-0.5 bg-blue-500/10 rounded ml-1 border border-blue-500/20">Direct Hire</span></h1>
         </div>
+        <p className="text-sm text-slate-400 hidden sm:block">Plataforma de empleos calificados en EE. UU.</p>
       </header>
 
-      {/* Filter Bar */}
-      <section className="border-b bg-white px-6 py-4 flex-shrink-0 shadow-sm">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
-          <input
-            type="text"
-            placeholder="Search by title, company, or city..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 min-w-[200px] rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
+      {/* Main Container estilo Computrabajo / Dos Columnas */}
+      <div className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        {/* COLUMNA IZQUIERDA: Filtros y Listado (5 columnas) */}
+        <div className="md:col-span-5 flex flex-col space-y-4">
+          
+          {/* Filtros de búsqueda */}
+          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 shadow-sm space-y-3">
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Filtrar Vacantes</h2>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={searchCategory}
+                onChange={(e) => setSearchCategory(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Todas las Especialidades</option>
+                <option value="HVAC">HVAC</option>
+                <option value="Electrician">Electrician</option>
+                <option value="Plumbing">Plumbing</option>
+                <option value="Welding">Welding</option>
+                <option value="Carpentry">Carpentry</option>
+              </select>
 
-          <select
-            value={selectedTrade}
-            onChange={(e) => setSelectedTrade(e.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="ALL">All Trades</option>
-            {tradeCategories.filter((t) => t !== 'ALL').map((trade) => (
-              <option key={trade} value={trade}>{trade}</option>
-            ))}
-          </select>
-
-          <select
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="ALL">All States</option>
-            {statesList.filter((s) => s !== 'ALL').map((state) => (
-              <option key={state} value={state}>{state}</option>
-            ))}
-          </select>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="newest">Most Recent</option>
-            <option value="rate">Highest Hourly Rate</option>
-          </select>
-        </div>
-      </section>
-
-      {/* Split-View Container */}
-      <main className="mx-auto flex w-full max-w-7xl flex-1 overflow-hidden p-4 gap-4">
-        {/* Left Column: Job Cards List */}
-        <div className="w-full md:w-5/12 overflow-y-auto space-y-3 pr-1">
-          <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 px-1">
-            {loading ? 'Loading jobs...' : `${filteredJobs.length} jobs available`}
+              <input
+                type="text"
+                placeholder="Ciudad (ej. Dallas)"
+                value={searchCity}
+                onChange={(e) => setSearchCity(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
           </div>
 
-          {filteredJobs.length === 0 && !loading && (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-              No openings match your search criteria.
-            </div>
-          )}
-
-          {filteredJobs.map((job) => {
-            const isSelected = selectedJob?.id === job.id;
-            return (
-              <div
-                key={job.id}
-                onClick={() => setSelectedJob(job)}
-                className={`cursor-pointer rounded-lg border p-4 transition shadow-sm ${
-                  isSelected
-                    ? 'border-blue-600 bg-blue-50/40 ring-1 ring-blue-600'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-                    {job.trade_category || 'Trade'}
-                  </span>
-                  <span className="text-xs text-slate-500">
-                    {job.created_at ? new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}
-                  </span>
-                </div>
-
-                <h3 className="mt-2 text-base font-semibold text-slate-900 leading-snug">
-                  {job.job_title}
-                </h3>
-                <p className="text-xs text-slate-600 mt-0.5">{job.company_name}</p>
-
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-medium">
-                    {job.city ? `${job.city}, ` : ''}{job.state}
-                  </span>
-                  {job.hourly_rate_min && job.hourly_rate_max && (
-                    <span className="font-bold text-slate-800">
-                      ${job.hourly_rate_min} - ${job.hourly_rate_max}/hr
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {/* Listado de empleos */}
+          <div className="space-y-3 overflow-y-auto max-h-[calc(100vh-240px)] pr-1">
+            {loading ? (
+              <div className="text-center py-12 text-slate-500 text-sm">Cargando vacantes...</div>
+            ) : jobs.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 text-sm bg-slate-950 rounded-xl border border-slate-800">No se encontraron ofertas activas.</div>
+            ) : (
+              jobs.map((job) => {
+                const isSelected = selectedJob?.id === job.id;
+                return (
+                  <div
+                    key={job.id}
+                    onClick={() => {
+                      setSelectedJob(job);
+                      setSuccessMsg(false);
+                    }}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer text-left ${
+                      isSelected
+                        ? 'bg-slate-800/80 border-blue-500 shadow-lg shadow-blue-500/5'
+                        : 'bg-slate-950 border-slate-800 hover:border-slate-700 hover:bg-slate-900/50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-xs font-semibold px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/20">
+                        {job.trade_category}
+                      </span>
+                      <span className="text-xs font-medium text-emerald-400">
+                        ${job.hourly_rate_min} - ${job.hourly_rate_max}/hr
+                      </span>
+                    </div>
+                    <h3 className="font-semibold text-white text-base mb-1 line-clamp-1">{job.job_title}</h3>
+                    <p className="text-xs text-slate-400 mb-2">{job.company_name}</p>
+                    <div className="flex items-center text-xs text-slate-500 space-x-2">
+                      <span>📍 {job.city}, {job.state}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        {/* Right Column: Full Job Details */}
-        <div className="hidden md:flex md:w-7/12 flex-col rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
+        {/* COLUMNA DERECHA: Detalle del Puesto y Formulario Nativo (7 columnas) */}
+        <div className="md:col-span-7 bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col h-[calc(100vh-100px)] sticky top-6 overflow-y-auto">
           {selectedJob ? (
-            <div className="flex flex-col h-full overflow-y-auto">
-              {/* Header */}
-              <div className="border-b p-6 sticky top-0 bg-white z-10">
+            <div className="flex flex-col h-full space-y-6">
+              
+              {/* Cabecera del detalle */}
+              <div className="border-b border-slate-800 pb-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="rounded bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 uppercase">
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/20 inline-block mb-2">
                       {selectedJob.trade_category}
                     </span>
-                    <h2 className="text-2xl font-bold text-slate-900 mt-2">
-                      {selectedJob.job_title}
-                    </h2>
-                    <p className="text-sm font-medium text-slate-600 mt-1">
-                      {selectedJob.company_name} — {selectedJob.city ? `${selectedJob.city}, ` : ''}{selectedJob.state}
-                    </p>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">{selectedJob.job_title}</h2>
+                    <p className="text-sm font-medium text-slate-300 mt-1">{selectedJob.company_name}</p>
                   </div>
-                  {selectedJob.hourly_rate_min && selectedJob.hourly_rate_max && (
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-slate-900">
-                        ${selectedJob.hourly_rate_min} - ${selectedJob.hourly_rate_max}
-                      </div>
-                      <span className="text-xs text-slate-500">per hour</span>
-                    </div>
-                  )}
+                  <div className="text-right">
+                    <span className="text-lg font-bold text-emerald-400">${selectedJob.hourly_rate_min} - ${selectedJob.hourly_rate_max}</span>
+                    <p className="text-xs text-slate-500">Pago por hora</p>
+                  </div>
                 </div>
-
-                {/* Apply Button */}
-                <div className="mt-5">
-                  <a
-                    href={selectedJob.original_url || selectedJob.apply_url || `mailto:${selectedJob.contact_email || 'apply@tradepulse.work'}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-md bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow hover:bg-blue-700 transition"
-                  >
-                    Apply on Original Site ↗
-                  </a>
+                <div className="flex items-center space-x-4 mt-3 text-xs text-slate-400">
+                  <span>📍 Ubicación: <strong className="text-slate-200">{selectedJob.city}, {selectedJob.state}</strong></span>
+                  <span>✉️ Contacto directo: <strong className="text-slate-200">{selectedJob.contact_email || 'rh@tradepulse.work'}</strong></span>
                 </div>
               </div>
 
-              {/* Body */}
-              <div className="p-6 space-y-6">
+              {/* Cuerpo del puesto */}
+              <div className="space-y-4 text-sm text-slate-300 flex-1 overflow-y-auto pr-2">
                 <div>
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-2">
-                    Job Description
-                  </h4>
-                  <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                    {selectedJob.description || 'No detailed description provided for this opening.'}
-                  </div>
+                  <h4 className="font-semibold text-white mb-1.5 uppercase tracking-wide text-xs text-blue-400">Descripción del Puesto</h4>
+                  <p className="whitespace-pre-line leading-relaxed text-slate-300">{selectedJob.description}</p>
                 </div>
 
                 {selectedJob.requirements && (
                   <div>
-                    <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-2">
-                      Requirements & Licenses
-                    </h4>
-                    <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-                      {selectedJob.requirements}
-                    </div>
+                    <h4 className="font-semibold text-white mb-1.5 uppercase tracking-wide text-xs text-blue-400">Requisitos y Licencias</h4>
+                    <p className="whitespace-pre-line leading-relaxed text-slate-300 bg-slate-900/60 p-3.5 rounded-lg border border-slate-800/80">{selectedJob.requirements}</p>
                   </div>
                 )}
+
+                {/* Formulario de Postulación Nativa */}
+                <div className="bg-slate-900 p-5 rounded-xl border border-slate-800 mt-6">
+                  <h3 className="text-base font-bold text-white mb-1">Postulación Directa (Quick Apply)</h3>
+                  <p className="text-xs text-slate-400 mb-4">Envía tus datos directamente al equipo de contratación de {selectedJob.company_name}.</p>
+
+                  {successMsg ? (
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-4 rounded-lg text-center text-sm font-medium">
+                      ¡Postulación enviada con éxito! La empresa se pondrá en contacto contigo pronto.
+                    </div>
+                  ) : (
+                    <form onSubmit={handleApply} className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-400 mb-1">Nombre Completo *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Ej. Carlos Mendoza"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-400 mb-1">Teléfono / WhatsApp *</label>
+                          <input
+                            type="tel"
+                            required
+                            placeholder="Ej. +1 (555) 019-2834"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-400 mb-1">Experiencia en el Oficio</label>
+                          <select
+                            value={experienceYears}
+                            onChange={(e) => setExperienceYears(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="1-2 years">1 a 2 años</option>
+                            <option value="2-4 years">2 a 4 años</option>
+                            <option value="4+ years">Más de 4 años</option>
+                            <option value="10+ years">Maestro / 10+ años</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-400 mb-1">Nota corta (Opcional)</label>
+                          <input
+                            type="text"
+                            placeholder="Ej. Tengo licencia activa y herramientas"
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="w-full mt-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-sm shadow-md shadow-blue-600/20 disabled:opacity-50"
+                      >
+                        {submitting ? 'Enviando postulación...' : 'Enviar Postulación Directa 🚀'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+
               </div>
+
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center text-slate-400 text-sm">
-              Select a job listing on the left to view details.
+            <div className="flex-1 flex items-center justify-center text-slate-500 text-sm">
+              Selecciona una oferta en la lista izquierda para ver el detalle y postularte.
             </div>
           )}
         </div>
-      </main>
+
+      </div>
     </div>
   );
 }
